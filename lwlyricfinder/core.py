@@ -1,9 +1,14 @@
-from selectolax.parser import HTMLParser
 from httpx import get, HTTPError
+from selectolax.parser import HTMLParser
+from urllib.parse import quote
 
 
 class LyricError(Exception):
     pass
+
+
+def format_song_query(query: str):
+    return quote(query.replace(" ", "-"))
 
 
 def divide_text(text: str, interval: int = 2) -> str:
@@ -17,12 +22,19 @@ def divide_text(text: str, interval: int = 2) -> str:
     return "\n".join(interleaved_lines)
 
 
-def fetch_lyrics(song_name: str, divide_interval: int = 0) -> str:
+def search_lyrics(query: str, matches: int = 5):
+    """
+    Searches for a song which contains a given query.
+    """
+    url = f"https://loveworldlyrics.com/{format_song_query(query)}/"
+
+
+def fetch_lyrics(query: str, divide_interval: int = 0) -> str:
     """
     Fetches lyrics from LoveWorld Lyrics for a given song.
     """
-    formatted_song_name = song_name.replace(" ", "-").lower()
-    url = f"https://loveworldlyrics.com/{formatted_song_name}/"
+
+    url = f"https://loveworldlyrics.com/{format_song_query(query)}/"
 
     try:
         response = get(url, follow_redirects=True)

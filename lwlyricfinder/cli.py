@@ -3,7 +3,7 @@ from typer import Typer, echo, Exit
 from pyperclip import copy
 
 
-app = Typer()
+app = Typer(rich_markup_mode="rich")
 
 
 @app.command()
@@ -17,4 +17,4 @@ def main(song: str):
         echo(f"{e}")
         raise Exit(code=1)
     copy(lyrics)
-    echo("Lyrics copied to clipboard!")
+    echo("[yellow]Lyrics copied to clipboard![/]")
