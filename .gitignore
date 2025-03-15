@@ -12,3 +12,6 @@ wheels/
 # IDE Files
 .idea/
 .vscode/
+
+# uv Stuff
+uv.lock
