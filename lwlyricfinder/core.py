@@ -1,6 +1,18 @@
 from httpx import get, HTTPError
 from selectolax.parser import HTMLParser
 from urllib.parse import quote
+from rich.progress import Progress, SpinnerColumn, TextColumn
+import regex as re
+
+
+URL_PATTERN = re.compile(r"(https?://)?loveworldlyrics\.com/")
+CLEAN_PATTERN = re.compile(
+    r"^(?:ad(?:-|\s)libs?|beat|break|bridge|call|chorus|coda|drop|echo|falsetto|growl|hook|"
+    r"in(?:strument(?:al|s)?|terludes?|tro(?:duction))|loop|middle\seight|outro|post(?:-|\s)chorus|"
+    r"pre(?:-|\s)chorus|refrain|reprise|response|riff|scat|solo|spoken(?:\sword)?|verse(?:\s\d+)?|"
+    r"whisper)$",
+    re.IGNORECASE | re.MULTILINE,
+)
 
 
 class LyricError(Exception):
@@ -22,34 +34,74 @@ def divide_text(text: str, interval: int = 2) -> str:
     return "\n".join(interleaved_lines)
 
 
-def search_lyrics(query: str, matches: int = 5):
+def search_lyrics(query: str, matches: int = 5) -> dict[str, str | None]:
     """
     Searches for a song which contains a given query.
     """
-    url = f"https://loveworldlyrics.com/{format_song_query(query)}/"
+    with Progress(
+        SpinnerColumn(spinner_name="toggle7"),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
+        task_id = progress.add_task("Forming URL.", total=None)
+        url = f"https://loveworldlyrics.com/?s={format_song_query(query)}"
+        try:
+            progress.update(task_id, description="Fetching page.", total=None)
+            response = get(url)
+            response.raise_for_status()
+        except HTTPError as e:
+            raise LyricError(f"Error searching for lyrics: {e}")
+
+        progress.update(task_id, description="Receiving page contents.", total=None)
+        text = response.text.encode("utf-8")
+
+        progress.update(task_id, description="Parsing HTML.", total=None)
+        parser = HTMLParser(text)
+        nodes = parser.css(".post-box-title a")[:matches]
+        return dict(map(lambda x: (x.text(), x.attributes.get("href", None)), nodes))
 
 
-def fetch_lyrics(query: str, divide_interval: int = 0) -> str:
+def fetch_lyrics(
+    query_or_url: str,
+    division_interval: int = 0,
+    clean=False,
+) -> str:
     """
     Fetches lyrics from LoveWorld Lyrics for a given song.
     """
+    with Progress(
+        SpinnerColumn(spinner_name="toggle7"),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
+        task_id = progress.add_task("Forming URL.", total=None)
+        if not URL_PATTERN.match(query_or_url):
+            url = f"https://loveworldlyrics.com/{format_song_query(query_or_url)}/"
+        else:
+            url = query_or_url
 
-    url = f"https://loveworldlyrics.com/{format_song_query(query)}/"
+        try:
+            progress.update(task_id, description="Performing search.", total=None)
+            response = get(url, follow_redirects=True)
+            response.raise_for_status()
+        except HTTPError as e:
+            raise LyricError(f"Error fetching lyrics: {e}")
 
-    try:
-        response = get(url, follow_redirects=True)
-        response.raise_for_status()
-    except HTTPError as e:
-        raise LyricError(f"Error fetching lyrics: {e}")
+        progress.update(task_id, description="Receiving page contents.", total=None)
+        text = response.text.encode("utf-8")
+        progress.update(task_id, description="Parsing HTML.", total=None)
+        parser = HTMLParser(text, use_meta_tags=False)
+        progress.update(task_id, description="Locating relevant nodes.", total=None)
+        nodes = parser.css("div.post-inner div.entry p")
 
-    text = response.text
-    parser = HTMLParser(text)
-    nodes = parser.css("div.post-inner div.entry p")
+        progress.update(task_id, description="Merging lyric blocks.", total=None)
+        lyrics = ("\n" if division_interval else "\n\n").join(
+            map(lambda node: node.text(separator="\n", strip=True), nodes)
+        )
 
-    lyrics = ("\n" if divide_interval else "\n\n").join(
-        map(lambda node: node.text(separator="\n", strip=True), nodes)
-    )
-
-    if divide_interval:
-        return divide_text(lyrics, divide_interval)
-    return lyrics
+        if clean:
+            lyrics = CLEAN_PATTERN.sub("", lyrics, concurrent=True)
+        if division_interval:
+            progress.update(task_id, description="Dividing text.", total=None)
+            return divide_text(lyrics, division_interval)
+        return lyrics
