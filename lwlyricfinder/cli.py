@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from typer import Typer, echo, Exit, getchar, Argument, Option
-from .core import fetch_lyrics, search_lyrics, LyricError
 from pyperclip import copy
+from typer import Argument, Exit, Option, Typer, echo, getchar
+
+from lwlyricfinder.core import LyricError, fetch_lyrics, search_lyrics
 
 app = Typer(rich_markup_mode="rich")
 

@@ -1,9 +1,9 @@
-from httpx import get, HTTPError
-from selectolax.parser import HTMLParser
 from urllib.parse import quote
-from rich.progress import Progress, SpinnerColumn, TextColumn
-import regex as re
 
+import regex as re
+from httpx import HTTPError, get
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from selectolax.parser import HTMLParser
 
 URL_PATTERN = re.compile(r"(https?://)?loveworldlyrics\.com/")
 CLEAN_PATTERN = re.compile(
