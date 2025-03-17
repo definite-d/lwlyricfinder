@@ -39,7 +39,7 @@ def search_lyrics(query: str, matches: int = 5) -> dict[str, str | None]:
     Searches for a song which contains a given query.
     """
     with Progress(
-        SpinnerColumn(spinner_name="toggle7"),
+        SpinnerColumn(spinner_name="line"),
         TextColumn("[progress.description]{task.description}"),
         transient=True,
     ) as progress:
@@ -65,12 +65,12 @@ def fetch_lyrics(
     query_or_url: str,
     division_interval: int = 0,
     clean=False,
-) -> str:
+) -> tuple[str, str]:
     """
-    Fetches lyrics from LoveWorld Lyrics for a given song.
+    Fetches title and lyrics from LoveWorld Lyrics for a given song.
     """
     with Progress(
-        SpinnerColumn(spinner_name="toggle7"),
+        SpinnerColumn(spinner_name="line"),
         TextColumn("[progress.description]{task.description}"),
         transient=True,
     ) as progress:
@@ -99,9 +99,12 @@ def fetch_lyrics(
             map(lambda node: node.text(separator="\n", strip=True), nodes)
         )
 
+        progress.update(task_id, description="Extracting song title.", total=None)
+        title = parser.css_first(".name").text().strip()
+
         if clean:
             lyrics = CLEAN_PATTERN.sub("", lyrics, concurrent=True)
         if division_interval:
             progress.update(task_id, description="Dividing text.", total=None)
-            return divide_text(lyrics, division_interval)
-        return lyrics
+            return title, divide_text(lyrics, division_interval)
+        return title, lyrics

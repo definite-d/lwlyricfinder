@@ -33,12 +33,13 @@ def find(
     Fetch song lyrics and copy them to the clipboard.
     """
     try:
-        lyrics = fetch_lyrics(song, division_interval, clean)
+        title, lyrics = fetch_lyrics(song, division_interval, clean)
     except LyricError as e:
         echo(f"{e}")
         raise Exit(code=1)
     else:
         copy(lyrics)
+        echo(f"Song: {title}.")
         echo("Lyrics copied to clipboard.")
 
 
@@ -97,13 +98,13 @@ def search(
         echo("No songs found.")
         raise Exit(code=1)
 
-    if use_first_result:
+    if use_first_result or ((total := len(songs)) == 1):
         name, link = next(iter(songs.items()))
-        echo(f"Using first result: {name}")
+        echo(f"Using first {'(and only) ' if total == 1 else ''}result.")
         find(link, division_interval, clean)
         raise Exit(code=0)
 
-    echo(f"{(total := len(songs))} songs found.")
+    echo(f"{total} songs found.")
     index_song_map = {}
 
     for index, title in enumerate(songs, 1):
@@ -116,7 +117,7 @@ def search(
     link = songs.get(index_song_map.get(answer, None), None)
 
     try:
-        if 0 < int(answer) < total:
+        if 0 < int(answer) < total + 1:
             find(link, division_interval, clean)
     except (TypeError, ValueError):
         echo("Exiting.")
