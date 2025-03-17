@@ -7,10 +7,10 @@ from selectolax.parser import HTMLParser
 
 URL_PATTERN = re.compile(r"(https?://)?loveworldlyrics\.com/")
 CLEAN_PATTERN = re.compile(
-    r"^(?:ad(?:-|\s)libs?|beat|break|bridge|call|chorus|coda|drop|echo|falsetto|growl|hook|"
-    r"in(?:strument(?:al|s)?|terludes?|tro(?:duction))|loop|middle\seight|outro|post(?:-|\s)chorus|"
-    r"pre(?:-|\s)chorus|refrain|reprise|response|riff|scat|solo|spoken(?:\sword)?|verse(?:\s\d+)?|"
-    r"whisper)$",
+    r"^(?:ad(?:-|\s)libs?|b(?:eat|r(?:eak|idge))|call|chorus|coda|drop|echo|falsetto|growl|hook|"
+    r"in(?=strument(?:al|s)?|terludes?|tro(?:duction))|loop|middle\seight|outro|post(?:-|\s)chorus|"
+    r"pre(?:-|\s)chorus|refrain|reprise|response|riff|scat|solo|spoken(?:\sword)?|vamp|verse(?:\s\d+)?|"
+    r"whisper)(?::?)$",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -29,7 +29,8 @@ def divide_text(text: str, interval: int = 2) -> str:
     """
     lines = text.split("\n")
     interleaved_lines = (
-        line + ("\n" if (i + 1) % interval == 0 else "") for i, line in enumerate(lines)
+        line + (f"\t(Line {i})\n" if (i % interval == 0) else f"\t(Line {i})")
+        for i, line in enumerate(filter(lambda s: s.strip(), lines), 1)
     )
     return "\n".join(interleaved_lines)
 

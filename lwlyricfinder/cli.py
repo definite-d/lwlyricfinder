@@ -1,7 +1,8 @@
 from typing import Annotated
 
 from pyperclip import copy
-from typer import Argument, Exit, Option, Typer, echo, getchar
+from typer import Argument, Exit, Option, Typer, prompt
+from rich import print
 
 from lwlyricfinder.core import LyricError, fetch_lyrics, search_lyrics
 
@@ -35,12 +36,11 @@ def find(
     try:
         title, lyrics = fetch_lyrics(song, division_interval, clean)
     except LyricError as e:
-        echo(f"{e}")
+        print(f"{e}")
         raise Exit(code=1)
     else:
         copy(lyrics)
-        echo(f"Song: {title}.")
-        echo("Lyrics copied to clipboard.")
+        print(f"Copied the following song's lyrics to clipboard: [green]{title}[/].")
 
 
 @app.command("search")
@@ -91,37 +91,36 @@ def search(
     try:
         songs = search_lyrics(query, use_first_result or matches)
     except LyricError as e:
-        echo(f"{e}")
+        print(f"{e}")
         raise Exit(code=1)
 
     if not songs:
-        echo("No songs found.")
+        print("No songs found.")
         raise Exit(code=1)
 
     if use_first_result or ((total := len(songs)) == 1):
         name, link = next(iter(songs.items()))
-        echo(f"Using first {'(and only) ' if total == 1 else ''}result.")
+        print(f"Using first {'(and only) ' if total == 1 else ''}result.")
         find(link, division_interval, clean)
         raise Exit(code=0)
 
-    echo(f"{total} songs found.")
+    print(f"{total} songs found.")
     index_song_map = {}
 
     for index, title in enumerate(songs, 1):
-        echo(f"↪ {index}. {title}")
+        print(f"↪ {index}. {title}")
         index_song_map[str(index)] = title
 
-    echo(f"Choose from 1 to {total}: ")
-    answer = getchar()
-    echo(answer + " chosen")
+    answer = prompt(f"=> Choose from 1 to {total}: ")
+    print(answer + " chosen")
     link = songs.get(index_song_map.get(answer, None), None)
 
     try:
         if 0 < int(answer) < total + 1:
             find(link, division_interval, clean)
     except (TypeError, ValueError):
-        echo("Exiting.")
+        print("Exiting.")
         raise Exit(code=0)
     else:
-        echo("Exiting.")
+        print("Exiting.")
         raise Exit(code=0)
