@@ -1,12 +1,10 @@
-from urllib.parse import quote
-
 import regex as re
 from httpx import HTTPError, get
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from selectolax.parser import HTMLParser
 
 URL_PATTERN = re.compile(r"(https?://)?loveworldlyrics\.com/")
-URL_REPLACEMENT_PATTERN = re.compile(r"–|\s")
+URL_HYPHENATE_PATTERN = re.compile(r"[–\s]+")
 CLEAN_PATTERN = re.compile(
     r"\b(?:ad(?:-|\s)libs?|b(?:eat|r(?:eak|idge))|call|cho(?:ir|rus)|coda|drop|echo|falsetto|growl|hook|"
     r"in(?=strument(?:al|s)?|terludes?|tro(?:duction))|loop|middle\seight|outro|post(?:-|\s)chorus|"
@@ -21,7 +19,17 @@ class LyricError(Exception):
 
 
 def format_song_query(query: str):
-    return quote(URL_REPLACEMENT_PATTERN.sub("-", query))
+    return URL_HYPHENATE_PATTERN.sub(
+        "-",
+        "".join(
+            filter(
+                lambda char: char
+                if (char.isalnum() or char in (" ", "-", "–"))
+                else "",
+                query,
+            )
+        ),
+    )
 
 
 def divide_text(text: str, interval: int = 2) -> str:
