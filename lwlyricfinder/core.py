@@ -6,11 +6,12 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from selectolax.parser import HTMLParser
 
 URL_PATTERN = re.compile(r"(https?://)?loveworldlyrics\.com/")
+URL_REPLACEMENT_PATTERN = re.compile(r"–|\s")
 CLEAN_PATTERN = re.compile(
-    r"^(?:ad(?:-|\s)libs?|b(?:eat|r(?:eak|idge))|call|chorus|coda|drop|echo|falsetto|growl|hook|"
+    r"\b(?:ad(?:-|\s)libs?|b(?:eat|r(?:eak|idge))|call|cho(?:ir|rus)|coda|drop|echo|falsetto|growl|hook|"
     r"in(?=strument(?:al|s)?|terludes?|tro(?:duction))|loop|middle\seight|outro|post(?:-|\s)chorus|"
-    r"pre(?:-|\s)chorus|refrain|reprise|response|riff|scat|solo|spoken(?:\sword)?|vamp|verse(?:\s\d+)?|"
-    r"whisper)(?::?)$",
+    r"pre(?:-|\s)chorus|re(?:frain|prise|sponse)|riff|scat|solo|spoken(?:\sword)?|vamp|verse(?:\s\d+)?|"
+    r"whisper)(:\s*)?\b",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -20,7 +21,7 @@ class LyricError(Exception):
 
 
 def format_song_query(query: str):
-    return quote(query.replace(" ", "-"))
+    return quote(URL_REPLACEMENT_PATTERN.sub("-", query))
 
 
 def divide_text(text: str, interval: int = 2) -> str:
@@ -29,7 +30,7 @@ def divide_text(text: str, interval: int = 2) -> str:
     """
     lines = text.split("\n")
     interleaved_lines = (
-        line + (f"\t(Line {i})\n" if (i % interval == 0) else f"\t(Line {i})")
+        line + ("\n" if (i % interval == 0) else "")
         for i, line in enumerate(filter(lambda s: s.strip(), lines), 1)
     )
     return "\n".join(interleaved_lines)
@@ -47,18 +48,24 @@ def search_lyrics(query: str, matches: int = 5) -> dict[str, str | None]:
         task_id = progress.add_task("Forming URL.", total=None)
         url = f"https://loveworldlyrics.com/?s={format_song_query(query)}"
         try:
-            progress.update(task_id, description="Fetching page.", total=None)
+            progress.update(task_id, description="Performing search.", total=None)
             response = get(url)
             response.raise_for_status()
         except HTTPError as e:
             raise LyricError(f"Error searching for lyrics: {e}")
 
-        progress.update(task_id, description="Receiving page contents.", total=None)
+        progress.update(
+            task_id,
+            description="Receiving search page contents.",
+            total=None,
+        )
         text = response.text.encode("utf-8")
 
         progress.update(task_id, description="Parsing HTML.", total=None)
         parser = HTMLParser(text)
-        nodes = parser.css(".post-box-title a")[:matches]
+        nodes = (all_nodes := parser.css(".post-box-title a"))[
+            : min(len(all_nodes), matches + 1)
+        ]
         return dict(map(lambda x: (x.text(), x.attributes.get("href", None)), nodes))
 
 
@@ -82,7 +89,7 @@ def fetch_lyrics(
             url = query_or_url
 
         try:
-            progress.update(task_id, description="Performing search.", total=None)
+            progress.update(task_id, description="Fetching page.", total=None)
             response = get(url, follow_redirects=True)
             response.raise_for_status()
         except HTTPError as e:

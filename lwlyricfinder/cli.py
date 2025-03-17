@@ -4,7 +4,7 @@ from pyperclip import copy
 from typer import Argument, Exit, Option, Typer, prompt
 from rich import print
 
-from lwlyricfinder.core import LyricError, fetch_lyrics, search_lyrics
+from .core import LyricError, fetch_lyrics, search_lyrics
 
 app = Typer(rich_markup_mode="rich")
 
@@ -105,22 +105,17 @@ def search(
         raise Exit(code=0)
 
     print(f"{total} songs found.")
-    index_song_map = {}
+    index_song_map: dict[int, str] = dict()
 
     for index, title in enumerate(songs, 1):
-        print(f"↪ {index}. {title}")
-        index_song_map[str(index)] = title
+        print(f"→ [blue]{index}[/]. [green]{title}[/]")
+        index_song_map[index] = title
 
-    answer = prompt(f"=> Choose from 1 to {total}: ")
-    print(answer + " chosen")
+    answer: int = prompt(f"==> Choose from 1 to {total}", type=int)
     link = songs.get(index_song_map.get(answer, None), None)
 
-    try:
-        if 0 < int(answer) < total + 1:
-            find(link, division_interval, clean)
-    except (TypeError, ValueError):
-        print("Exiting.")
-        raise Exit(code=0)
+    if 0 < int(answer) < total + 1:
+        find(link, division_interval, clean)
     else:
-        print("Exiting.")
+        print("Invalid number chosen. Exiting.")
         raise Exit(code=0)
