@@ -75,7 +75,7 @@ def search(
         Option(
             "--use-first-result",
             "-f",
-            help="Returns the lyrics of the first search result automatically, if any result exists.",
+            help="Return the lyrics of the first search result automatically, if any result exists.",
         ),
     ] = False,
     clean: Annotated[
@@ -83,7 +83,7 @@ def search(
         Option(
             "--clean",
             "-c",
-            help="Whether to clean the lyrics of instructional words, such as 'Chorus' or 'Solo'.",
+            help="Clean the lyrics of instructional words, such as 'Chorus' or 'Solo'.",
         ),
     ] = False,
 ):
