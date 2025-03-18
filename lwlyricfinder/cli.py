@@ -29,6 +29,14 @@ def find(
             help="Whether to clean the lyrics of instructional words, such as 'Chorus' or 'Solo'.",
         ),
     ] = False,
+    show: Annotated[
+        bool,
+        Option(
+            "--show",
+            "-s",
+            help="Print the final result to stdout.",
+        ),
+    ] = False,
 ):
     """
     Fetch song lyrics and copy them to the clipboard.
@@ -40,7 +48,14 @@ def find(
         raise Exit(code=1)
     else:
         copy(lyrics)
-        print(f"Copied the following song's lyrics to clipboard: [green]{title}[/].")
+        if show:
+            print("Copied the following song's lyrics to clipboard.")
+            print(f"Title: {title}\n")
+            print(lyrics)
+        else:
+            print(
+                f"Copied the following song's lyrics to clipboard: [green]{title}[/]."
+            )
 
 
 @app.command("search")
@@ -86,6 +101,14 @@ def search(
             help="Clean the lyrics of instructional words, such as 'Chorus' or 'Solo'.",
         ),
     ] = False,
+    show: Annotated[
+        bool,
+        Option(
+            "--show",
+            "-s",
+            help="Print the final result to stdout.",
+        ),
+    ] = False,
 ):
     """Search for a specific song query."""
     try:
@@ -102,7 +125,7 @@ def search(
     if use_first_result or (total == 1):
         name, link = next(iter(songs.items()))
         print(f"Using first {'(and only) ' if total == 1 else ''}result.")
-        find(link, division_interval, clean)
+        find(link, division_interval, clean, show)
         raise Exit(code=0)
 
     print(f"Showing {total} results.")
@@ -116,7 +139,7 @@ def search(
     link = songs.get(index_song_map.get(answer, None), None)
 
     if 0 < int(answer) < total + 1:
-        find(link, division_interval, clean)
+        find(link, division_interval, clean, show)
     else:
         print("Invalid number chosen. Exiting.")
         raise Exit(code=0)
