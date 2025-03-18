@@ -4,7 +4,8 @@ from pyperclip import copy
 from typer import Argument, Exit, Option, Typer, prompt
 from rich import print
 
-from .core import LyricError, fetch_lyrics, search_lyrics
+from .core.lyrics import fetch_lyrics, search_lyrics
+from .core.exceptions import LyricError
 
 app = Typer(rich_markup_mode="rich")
 
