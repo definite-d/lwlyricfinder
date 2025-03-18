@@ -1,0 +1,2 @@
+class LyricError(Exception):
+    pass

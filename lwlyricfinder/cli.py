@@ -41,6 +41,24 @@ def find(
 ):
     """
     Fetch song lyrics and copy them to the clipboard.
+
+    This function searches for a song's lyrics, fetches them, and copies the lyrics to the clipboard.
+    It can also optionally clean the lyrics and display them in the console.
+
+    Args:
+        song (str): The name or title of the song to search for.
+        division_interval (int, optional): The number of lines to space the lyrics by.
+            Defaults to 0, which uses the default spacing from the site.
+        clean (bool, optional): Whether to remove instructional words (e.g., 'Chorus', 'Solo')
+            from the lyrics. Defaults to False.
+        show (bool, optional): Whether to print the fetched lyrics to stdout. Defaults to False.
+
+    Raises:
+        Exit: If there's an error fetching the lyrics, exits with code 1.
+
+    Returns:
+        None: This function doesn't return anything, but it copies the lyrics to the clipboard
+        and optionally prints them to stdout.
     """
     try:
         title, lyrics = fetch_lyrics(song, division_interval, clean)
@@ -111,16 +129,38 @@ def search(
         ),
     ] = False,
 ):
-    """Search for a specific song query."""
+    """
+    Search for a specific song query and retrieve its lyrics.
+
+    This function searches for songs based on a given query, displays the results,
+    and allows the user to choose a song to fetch its lyrics. The lyrics are then
+    copied to the clipboard and optionally displayed.
+
+    Args:
+        query (str): The search query, which can be a phrase from the song or its title.
+        matches (int, optional): The number of search results to show. Defaults to 5.
+            Must be between 1 and 10.
+        division_interval (int, optional): The number of lines to space the lyrics by.
+            Defaults to 0, which uses the default spacing from the site.
+        use_first_result (bool, optional): If True, automatically use the first search
+            result without prompting for user input. Defaults to False.
+        clean (bool, optional): If True, remove instructional words (e.g., 'Chorus', 'Solo')
+            from the lyrics. Defaults to False.
+        show (bool, optional): If True, print the fetched lyrics to stdout. Defaults to False.
+
+    Raises:
+        Exit: If there's an error fetching the lyrics or if no songs are found, exits with code 1.
+              If the user chooses an invalid option, exits with code 0.
+
+    Returns:
+        None: This function doesn't return anything, but it copies the lyrics to the clipboard
+        and optionally prints them to stdout.
+    """
     try:
         songs = search_lyrics(query, use_first_result or matches)
     except LyricError as e:
-        print(f"{e}")
-        raise Exit(code=1)
-
-    if not songs:
-        print("No songs found.")
-        raise Exit(code=1)
+        print(f"[red]{e}[/]")
+        raise Exit(1)
 
     total: int = len(songs)
     if use_first_result or (total == 1):
@@ -142,5 +182,5 @@ def search(
     if 0 < int(answer) < total + 1:
         find(link, division_interval, clean, show)
     else:
-        print("Invalid number chosen. Exiting.")
-        raise Exit(code=0)
+        print("[red]Invalid number chosen.[/]")
+        raise Exit(code=1)

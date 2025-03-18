@@ -1,47 +1,28 @@
-import regex as re
 from httpx import HTTPError, get
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from selectolax.parser import HTMLParser
+from selectolax.parser import HTMLParser, Node
 
-URL_PATTERN = re.compile(r"(https?://)?loveworldlyrics\.com/")
-URL_HYPHENATE_PATTERN = re.compile(r"[–\s]+")
-CLEAN_PATTERN = re.compile(
-    r"\b(?:ad(?:-|\s)libs?|b(?:eat|r(?:eak|idge))|call|cho(?:ir|rus)|coda|drop|echo|falsetto|growl|hook|"
-    r"in(?=strument(?:al|s)?|terludes?|tro(?:duction))|loop|middle\seight|outro|post(?:-|\s)chorus|"
-    r"pre(?:-|\s)chorus|re(?:frain|prise|sponse)|riff|scat|solo|spoken(?:\sword)?|vamp|verse(?:\s\d+)?|"
-    r"whisper)(:\s*)?\b",
-    re.IGNORECASE | re.MULTILINE,
-)
+from .exceptions import LyricError
+from .patterns import URL_PATTERN, CLEAN_PATTERN
+from .utils import format_song_query, divide_text
 
-
-class LyricError(Exception):
-    pass
-
-
-def format_song_query(query: str):
-    return URL_HYPHENATE_PATTERN.sub(
-        "-",
-        "".join(
-            filter(
-                lambda char: char
-                if (char.isalnum() or char in (" ", "-", "–"))
-                else "",
-                query,
-            )
-        ),
-    )
-
-
-def divide_text(text: str, interval: int = 2) -> str:
-    """
-    Insert blank lines into the text at every 'interval' lines.
-    """
-    lines = text.split("\n")
-    interleaved_lines = (
-        line + ("\n" if (i % interval == 0) else "")
-        for i, line in enumerate(filter(lambda s: s.strip(), lines), 1)
-    )
-    return "\n".join(interleaved_lines)
+HOST: str = "loveworldlyrics.com"
+HEADERS: dict[str, str] = {
+    "Host": HOST,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Sec-GPC": "1",
+    "Alt-Used": HOST,
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "DNT": "1",
+    "Priority": "u=0, i",
+    "TE": "trailers",
+}
 
 
 def search_lyrics(query: str, matches: int = 5) -> dict[str, str | None]:
@@ -56,10 +37,10 @@ def search_lyrics(query: str, matches: int = 5) -> dict[str, str | None]:
         task_id = progress.add_task("Forming URL.", total=None)
         # The query isn't formatted because it appears to alter the results.
         # Searching with the raw query seems to work better, and is definitely faster.
-        url = f"https://loveworldlyrics.com/?s={query}"
+        url = f"https://{HOST}/?s={query}"
         try:
             progress.update(task_id, description="Performing search.", total=None)
-            response = get(url)
+            response = get(url, headers=HEADERS)
             response.raise_for_status()
         except HTTPError as e:
             raise LyricError(f"Error searching for lyrics: {e}")
@@ -73,9 +54,10 @@ def search_lyrics(query: str, matches: int = 5) -> dict[str, str | None]:
 
         progress.update(task_id, description="Parsing HTML.", total=None)
         parser = HTMLParser(text)
-        nodes = (all_nodes := parser.css(".post-box-title a"))[
-            : min(len(all_nodes), matches)
-        ]
+        all_nodes: list[Node] = parser.css(".post-box-title a")
+        if not all_nodes:
+            raise LyricError("Error searching for lyrics: No songs found.")
+        nodes = all_nodes[: min(len(all_nodes), matches)]
         return dict(map(lambda x: (x.text(), x.attributes.get("href", None)), nodes))
 
 
@@ -94,13 +76,13 @@ def fetch_lyrics(
     ) as progress:
         task_id = progress.add_task("Forming URL.", total=None)
         if not URL_PATTERN.match(query_or_url):
-            url = f"https://loveworldlyrics.com/{format_song_query(query_or_url)}/"
+            url = f"https://{HOST}/{format_song_query(query_or_url)}/"
         else:
             url = query_or_url
 
         try:
             progress.update(task_id, description="Fetching page.", total=None)
-            response = get(url, follow_redirects=True)
+            response = get(url, follow_redirects=True, headers=HEADERS)
             response.raise_for_status()
         except HTTPError as e:
             raise LyricError(f"Error fetching lyrics: {e}")
