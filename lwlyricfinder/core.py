@@ -54,7 +54,9 @@ def search_lyrics(query: str, matches: int = 5) -> dict[str, str | None]:
         transient=True,
     ) as progress:
         task_id = progress.add_task("Forming URL.", total=None)
-        url = f"https://loveworldlyrics.com/?s={format_song_query(query)}"
+        # The query isn't formatted because it appears to alter the results.
+        # Searching with the raw query seems to work better, and is definitely faster.
+        url = f"https://loveworldlyrics.com/?s={query}"
         try:
             progress.update(task_id, description="Performing search.", total=None)
             response = get(url)
@@ -72,7 +74,7 @@ def search_lyrics(query: str, matches: int = 5) -> dict[str, str | None]:
         progress.update(task_id, description="Parsing HTML.", total=None)
         parser = HTMLParser(text)
         nodes = (all_nodes := parser.css(".post-box-title a"))[
-            : min(len(all_nodes), matches + 1)
+            : min(len(all_nodes), matches)
         ]
         return dict(map(lambda x: (x.text(), x.attributes.get("href", None)), nodes))
 

@@ -98,13 +98,14 @@ def search(
         print("No songs found.")
         raise Exit(code=1)
 
-    if use_first_result or ((total := len(songs)) == 1):
+    total: int = len(songs)
+    if use_first_result or (total == 1):
         name, link = next(iter(songs.items()))
         print(f"Using first {'(and only) ' if total == 1 else ''}result.")
         find(link, division_interval, clean)
         raise Exit(code=0)
 
-    print(f"{total} songs found.")
+    print(f"Showing {total} results.")
     index_song_map: dict[int, str] = dict()
 
     for index, title in enumerate(songs, 1):
