@@ -17,4 +17,30 @@ dependencies = [
 dev = [
     "isort>=6.0.1",
     "nuitka>=2.6.8",
+    "pyperclip>=1.9.0",
+    "pytest>=8.3.5",
+    "pytest-dependency>=0.6.0",
+    "pytest-httpx>=0.35.0",
 ]
+
+[build-system]
+requires = ["setuptools>=42", "wheel", "nuitka", "toml"]
+build-backend = "nuitka.distutils.Build"
+
+# Data files are to be handled by setuptools and not Nuitka
+#[tool.setuptools.package-data]
+#some_package = ['data_file.txt']
+
+[nuitka]
+follow-import-to = ["selectolax","httpx","pyperclip","regex","typer"]
+lto = "yes"
+mode = "onefile"
+no-deployment-flag = "self-execution"
+nofollow-import-to=["tkinter","PIL","matplotlib"]
+noinclude-pytest-mode = "nofollow"
+output-dir = "dist"
+python-flag = "-m"
+remove-output = true
+company-name = "Afam-Ifediogor, U. Divine"
+product-name = "LW Lyric Finder"
+trademarks = "Copyright 2025, Afam-Ifediogor, U. Divine."
