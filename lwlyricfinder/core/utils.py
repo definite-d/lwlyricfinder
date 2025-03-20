@@ -23,21 +23,40 @@ def parse_html_content(content: str) -> str:
 
 def format_text_spacing(text: str):
     """
-    Formats given text to avoid multiple empty lines and trailing ones.
+    Reduces excessive empty lines in the given text,
+    ensuring no more than two consecutive newlines,
+    and trims leading and trailing whitespace.
+
+    :param text: The input text to format.
+    :type text: str
+    :return: The formatted text with adjusted spacing.
+    :rtype: str
     """
     return sub(r"\n{3,}", "\n\n", text).strip()
 
 
 def clean_lyrics(lyrics: str):
     """
-    Cleans given lyrics of all additional "instructions", e.g. [Repeat] or <x2>.
+    Removes instructional text (e.g., [Repeat], <x2>) from song lyrics using a predefined pattern.
+
+    :param lyrics: The lyrics to be cleaned.
+    :type lyrics: str
+    :return: The cleaned lyrics without additional instructions.
+    :rtype: str
     """
     return CLEAN_PATTERN.sub("", lyrics, concurrent=True)
 
 
 def divide_text(text: str, interval: int = 2) -> str:
     """
-    Insert blank lines into the text at every 'interval' lines.
+    Inserts a blank line into the text at every specified interval of non-empty lines.
+
+    :param text: The input text to modify.
+    :type text: str
+    :param interval: The number of lines between each inserted blank line, defaults to 2.
+    :type interval: int, optional
+    :return: The formatted text with inserted blank lines.
+    :rtype: str
     """
     lines: tuple[str, ...] = tuple(filter(lambda s: s.strip(), text.split("\n")))
     interleaved_lines: Generator[str, str, None] = (
@@ -48,6 +67,18 @@ def divide_text(text: str, interval: int = 2) -> str:
 
 
 class Song:
+    """
+    Represents a song with its title and lyrics, supporting optional formatting and cleaning.
+
+    :param response: A dictionary containing song metadata, including the title and content.
+    :type response: dict
+    :param division_interval: The interval at which blank lines are inserted in the lyrics, defaults to 0.
+    :type division_interval: int, optional
+    :param clean: Whether to remove instructional text from the lyrics, defaults to False.
+    :type clean: bool, optional
+    :raises LyricError: If the response does not contain valid song content.
+    """
+
     def __init__(self, response: dict, division_interval: int = 0, clean: bool = False):
         try:
             self.title: str = unescape(response.get("title").get("rendered"))
@@ -59,7 +90,13 @@ class Song:
         self.clean: bool = clean
 
     @property
-    def content(self):
+    def content(self) -> str:
+        """
+        Processes and returns the song lyrics, applying optional cleaning and formatting.
+
+        :return: The formatted lyrics as a string.
+        :rtype: str
+        """
         if not self._content:
             self._content = parse_html_content(self._raw_content)
             if self.clean:
@@ -70,5 +107,11 @@ class Song:
                 self._content = format_text_spacing(self._content)
         return self._content
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Returns a string representation of the song, displaying its title.
+
+        :return: The song's title.
+        :rtype: str
+        """
         return f"Title: {self.title}"

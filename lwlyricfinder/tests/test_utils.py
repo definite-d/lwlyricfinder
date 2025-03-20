@@ -60,68 +60,23 @@ def test_divide_text():
     ) == ("Line 1\nLine 2\n\nLine 3\nLine 4\n\nLine 5\nLine 6\n\nLine 7")
 
 
-# @mark.dependency(
-#     depends=[
-#         "test_format_text_spacing",
-#         "test_parse_html_content",
-#         "test_clean_lyrics",
-#         "test_divide_text",
-#     ]
-# )
+@mark.dependency(
+    depends=[
+        "test_format_text_spacing",
+        "test_parse_html_content",
+        "test_clean_lyrics",
+        "test_divide_text",
+    ]
+)
 def test_song_object(song):
-    from pyperclip import copy
-
     song_1 = Song(song, 2, True)
-    song_2 = Song(song, 0, False)
-
     assert song_1.content == (
-        "For all that You have done\n"
-        "Jesus, I magnify Your Name\n"
-        "\n"
-        "For all that You have done\n"
-        "Jesus, I Magnify Your Name\n"
-        "\n"
-        "Endless Praise\n"
-        "Endless thanks\n"
-        "\n"
-        "Belongs to You, My God\n"
-        "Endless Praise\n"
-        "\n"
-        "Endless thanks\n"
-        "Belongs to You, My God\n"
-        "\n"
-        "For all that You have done\n"
-        "Jesus, I magnify Your Name\n"
-        "\n"
-        "For all that You have done\n"
-        "Jesus, I magnify Your Name\n"
-        "\n"
-        "For all that You have done\n"
-        "Jesus, I magnify Your Name\n"
-        "\n"
-        "Endless Praise\n"
-        "Endless thanks\n"
-        "\n"
-        "Belongs to You, My God\n"
-        "Endless Praise\n"
-        "\n"
-        "Endless thanks\n"
-        "Belongs to You, My God\n"
-        "\n"
-        "For all that You have done\n"
-        "Jesus, I magnify Your Name\n"
-        "\n"
-        "For all that You have done\n"
-        "Jesus, I magnify Your Name\n"
-        "\n"
-        "Endless praise\n"
-        "Endless thanks\n"
-        "\n"
-        "Belongs to You My God\n"
-        "Endless praise\n"
-        "\n"
-        "Endless thanks\n"
-        "Belongs to You My God"
+        "For all that You have done\nJesus, I magnify Your Name\n\nFor all that You have done\nJesus, I Magnify Your "
+        "Name\n\nEndless Praise\nEndless thanks\n\nBelongs to You, My God\nEndless Praise\n\nEndless thanks\nBelongs "
+        "to You, My God\n\nFor all that You have done\nJesus, I magnify Your Name\n\nFor all that You have done\nJesus,"
+        " I magnify Your Name\n\nFor all that You have done\nJesus, I magnify Your Name\n\nEndless Praise\nEndless "
+        "thanks\n\nBelongs to You, My God\nEndless Praise\n\nEndless thanks\nBelongs to You, My God\n\nFor all that "
+        "You have done\nJesus, I magnify Your Name\n\nFor all that You have done\nJesus, I magnify Your Name\n\n"
+        "Endless praise\nEndless thanks\n\nBelongs to You My God\nEndless praise\n\nEndless thanks\nBelongs to You "
+        "My God"
     )
-
-    copy(song_2.content)
