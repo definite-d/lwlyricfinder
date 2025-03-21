@@ -14,6 +14,7 @@
 # nuitka-project: --no-deployment-flag=self-execution
 # nuitka-project: --nofollow-import-to=PIL
 # nuitka-project: --nofollow-import-to=matplotlib
+# nuitka-project: --nofollow-import-to=tests
 # nuitka-project: --nofollow-import-to=tkinter
 # nuitka-project: --noinclude-pytest-mode=nofollow
 # nuitka-project: --output-dir=dist

@@ -3,8 +3,8 @@ from ..core.utils import (
     clean_lyrics,
     format_text_spacing,
     divide_text,
-    Song,
 )
+from ..core.song import Song
 from pytest import fixture, mark
 from json import load
 from pathlib import Path
