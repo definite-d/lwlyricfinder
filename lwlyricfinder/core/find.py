@@ -1,9 +1,10 @@
-from httpx import HTTPError, get, HTTPStatusError
 from urllib.parse import quote
+
+from httpx import HTTPError, HTTPStatusError, get
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from .exceptions import LyricError
-from .patterns import URL_PATTERN, HOST
+from .patterns import HOST, URL_PATTERN
 from .song import Song
 
 HEADERS: dict[str, str] = {

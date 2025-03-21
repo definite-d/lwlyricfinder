@@ -1,7 +1,7 @@
 from typing import Generator
 
-from selectolax.parser import HTMLParser
 from regex import sub
+from selectolax.parser import HTMLParser
 
 from .patterns import CLEAN_PATTERN
 
@@ -16,8 +16,16 @@ def parse_html_content(content: str) -> str:
     :rtype: str
     """
     parser: HTMLParser = HTMLParser(content)
-    result: str = "\n".join(map(lambda p: p.text(separator="\n"), parser.css("p")))
+    # We can't just go with `parser.text(separator="\n")`)` because nearly all songs would have
+    # "MORE FROM ARTISTE" and other advertising text.
+    # Thus, we either try to get text from only `p` tags.
+    result: str = "\n".join(
+        map(lambda p: p.text(separator="\n"), parser.css("p")),
+    ).strip()
     if not result:
+        # If that fails (giving an empty string), we try a fallback, using
+        # all shallow text from the lyrics block. This works because for some older songs,
+        # p tags weren't used.
         result: str = parser.text(deep=False, separator="\n", strip=False).strip()
     return result
 

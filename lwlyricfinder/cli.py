@@ -1,11 +1,11 @@
 from typing import Annotated
 
 from pyperclip import copy
-from typer import Argument, Exit, Option, Typer, prompt
 from rich import print
+from typer import Argument, Exit, Option, Typer, prompt
 
-from .core.find import find
 from .core.exceptions import LyricError
+from .core.find import find
 from .core.song import Song
 
 app = Typer(rich_markup_mode="rich")
@@ -21,7 +21,12 @@ def finalize(song: Song, show: bool = False):
 
 @app.command()
 def find_lyrics(
-    song: Annotated[str, Argument(help="The song to search for.")],
+    query: Annotated[
+        str,
+        Argument(
+            help="Search query for the song. Can be a link, full or partial title, or lyrics snippet."
+        ),
+    ],
     matches: Annotated[
         int,
         Option(
@@ -66,7 +71,7 @@ def find_lyrics(
     ] = False,
 ):
     try:
-        songs: tuple[Song, ...] = find(song, matches, division_interval, clean)
+        songs: tuple[Song, ...] = find(query, matches, division_interval, clean)
     except LyricError as e:
         print(f"[red]{e}[/]")
         raise Exit(code=1)
@@ -74,14 +79,14 @@ def find_lyrics(
     total: int = len(songs)
 
     if use_first_result or (total == 1):
-        song = songs[0]
+        query = songs[0]
         print(f"Using first {'(and only) ' if total == 1 else ''}result.")
-        finalize(song, show)
+        finalize(query, show)
         raise Exit(code=0)
 
     print(f"Showing {total} results.")
-    for index, song in enumerate(songs, 1):
-        print(f"→ [blue]{index}[/]. [green]{song.title}[/]")
+    for index, query in enumerate(songs, 1):
+        print(f"→ [blue]{index}[/]. [green]{query.title}[/]")
 
     answer: int = prompt(f"==> Choose from 1 to {total}", type=int)
 

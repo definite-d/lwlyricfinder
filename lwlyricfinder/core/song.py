@@ -1,7 +1,8 @@
 from html import unescape
 
 from .exceptions import LyricError
-from .utils import parse_html_content, clean_lyrics, divide_text, format_text_spacing
+from .utils import (clean_lyrics, divide_text, format_text_spacing,
+                    parse_html_content)
 
 
 class Song:

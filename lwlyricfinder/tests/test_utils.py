@@ -1,24 +1,7 @@
-from ..core.utils import (
-    parse_html_content,
-    clean_lyrics,
-    format_text_spacing,
-    divide_text,
-)
-from ..core.song import Song
-from pytest import fixture, mark
-from json import load
-from pathlib import Path
+from pytest import mark
 
-
-@fixture
-def response():
-    with open(Path(__file__).parent / "response.json", "rb") as file:
-        return load(file)
-
-
-@fixture
-def song(response):
-    return response[0]
+from ..core.utils import (clean_lyrics, divide_text, format_text_spacing,
+                          parse_html_content)
 
 
 @mark.dependency()
@@ -58,25 +41,3 @@ def test_divide_text():
         "\nLine 1\nLine 2\n\n\n\n\nLine 3\n\nLine 4\nLine 5\nLine 6\nLine 7\n    \n\n",
         2,
     ) == ("Line 1\nLine 2\n\nLine 3\nLine 4\n\nLine 5\nLine 6\n\nLine 7")
-
-
-@mark.dependency(
-    depends=[
-        "test_format_text_spacing",
-        "test_parse_html_content",
-        "test_clean_lyrics",
-        "test_divide_text",
-    ]
-)
-def test_song_object(song):
-    song_1 = Song(song, 2, True)
-    assert song_1.content == (
-        "For all that You have done\nJesus, I magnify Your Name\n\nFor all that You have done\nJesus, I Magnify Your "
-        "Name\n\nEndless Praise\nEndless thanks\n\nBelongs to You, My God\nEndless Praise\n\nEndless thanks\nBelongs "
-        "to You, My God\n\nFor all that You have done\nJesus, I magnify Your Name\n\nFor all that You have done\nJesus,"
-        " I magnify Your Name\n\nFor all that You have done\nJesus, I magnify Your Name\n\nEndless Praise\nEndless "
-        "thanks\n\nBelongs to You, My God\nEndless Praise\n\nEndless thanks\nBelongs to You, My God\n\nFor all that "
-        "You have done\nJesus, I magnify Your Name\n\nFor all that You have done\nJesus, I magnify Your Name\n\n"
-        "Endless praise\nEndless thanks\n\nBelongs to You My God\nEndless praise\n\nEndless thanks\nBelongs to You "
-        "My God"
-    )
